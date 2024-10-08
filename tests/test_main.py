@@ -1,3 +1,4 @@
+import os
 import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
@@ -12,7 +13,13 @@ def mock_aleph_alpha_client():
     with patch('src.handlers.AlephAlphaClient') as mock_client:
         yield mock_client.return_value
 
-def test_chat_completions(client, mock_aleph_alpha_client):
+@pytest.fixture
+def headers():
+    return {
+        "Authorization": f"Bearer {os.environ.get('ALEPH_ALPHA_API_TOKEN', 'test_token')}"
+    }
+
+def test_chat_completions(client, mock_aleph_alpha_client, headers):
     mock_response = MagicMock()
     mock_response.json.return_value = {"choices": [{"message": {"content": "Hello, how can I help you?"}}]}
     mock_aleph_alpha_client.request.return_value = mock_response
@@ -20,13 +27,13 @@ def test_chat_completions(client, mock_aleph_alpha_client):
     response = client.post("/v1/chat/completions", json={
         "model": "luminous-base",
         "messages": [{"role": "user", "content": "Hello"}]
-    })
+    }, headers=headers)
 
     assert response.status_code == 200
     assert "choices" in response.json()
     assert response.json()["choices"][0]["message"]["content"] == "Hello, how can I help you?"
 
-def test_completions(client, mock_aleph_alpha_client):
+def test_completions(client, mock_aleph_alpha_client, headers):
     mock_response = MagicMock()
     mock_response.json.return_value = {"choices": [{"text": "Berlin is the capital of Germany."}]}
     mock_aleph_alpha_client.request.return_value = mock_response
@@ -35,13 +42,13 @@ def test_completions(client, mock_aleph_alpha_client):
         "model": "luminous-base-control",
         "prompt": "What's the capital of Germany?",
         "max_tokens": 50
-    })
+    }, headers=headers)
 
     assert response.status_code == 200
     assert "choices" in response.json()
     assert response.json()["choices"][0]["text"] == "Berlin is the capital of Germany."
 
-def test_embeddings(client, mock_aleph_alpha_client):
+def test_embeddings(client, mock_aleph_alpha_client, headers):
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "embeddings": {"layer_40": {"mean": [0.1, 0.2, 0.3]}},
@@ -53,14 +60,14 @@ def test_embeddings(client, mock_aleph_alpha_client):
     response = client.post("/v1/embeddings", json={
         "model": "luminous-base",
         "input": "Apple"
-    })
+    }, headers=headers)
 
     assert response.status_code == 200
     assert "data" in response.json()
     assert "embedding" in response.json()["data"][0]
     assert response.json()["data"][0]["embedding"] == [0.1, 0.2, 0.3]
 
-def test_chat_completions_stream(client, mock_aleph_alpha_client):
+def test_chat_completions_stream(client, mock_aleph_alpha_client, headers):
     mock_response = MagicMock()
     mock_response.aiter_bytes.return_value = iter([b'data: {"choices": [{"delta": {"content": "Hello"}}]}\n\n',
                                                    b'data: {"choices": [{"delta": {"content": " world"}}]}\n\n'])
@@ -70,7 +77,7 @@ def test_chat_completions_stream(client, mock_aleph_alpha_client):
         "model": "luminous-base",
         "messages": [{"role": "user", "content": "Hello"}],
         "stream": True
-    })
+    }, headers=headers)
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "text/event-stream"
