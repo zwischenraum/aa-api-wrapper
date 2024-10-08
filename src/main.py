@@ -23,7 +23,6 @@ async def proxy_request(request: Request, aleph_alpha_path: str, transform_body=
         if transform_body:
             body = json.dumps(transform_body(await request.json()))
         
-        print(body)
         if body:
             response = await client.post(aleph_alpha_url, content=body, headers=headers)
         else:
@@ -99,5 +98,3 @@ async def embeddings(request: Request):
             },
         }
         return JSONResponse(content=openai_response)
-
-from hello import hello
