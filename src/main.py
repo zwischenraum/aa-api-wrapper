@@ -100,3 +100,4 @@ async def embeddings(request: Request):
         }
         return JSONResponse(content=openai_response)
 
+from hello import hello
