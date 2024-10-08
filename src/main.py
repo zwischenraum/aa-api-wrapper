@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Callable, Dict, Any
+from typing import Callable, Dict, Any, Optional
 
 import httpx
 from dotenv import load_dotenv
@@ -13,29 +13,23 @@ load_dotenv()
 
 ALEPH_ALPHA_API_BASE = os.environ.get("ALEPH_ALPHA_API_BASE", "https://api.aleph-alpha.com")
 
-async def proxy_request(request: Request, aleph_alpha_path: str, transform_body: Callable[[Dict[str, Any]], Dict[str, Any]] = None):
+class AlephAlphaClient:
+    def __init__(self, base_url: str):
+        self.base_url = base_url
+
+    async def request(self, method: str, path: str, headers: Dict[str, str], **kwargs) -> httpx.Response:
+        url = f"{self.base_url}{path}"
+        async with httpx.AsyncClient() as client:
+            response = await client.request(method, url, headers=headers, **kwargs)
+            response.raise_for_status()
+            return response
+
+client = AlephAlphaClient(ALEPH_ALPHA_API_BASE)
+
+def prepare_headers(request: Request) -> Dict[str, str]:
     headers = dict(request.headers.items())
     headers.pop("content-length", None)
-    
-    async with httpx.AsyncClient() as client:
-        aleph_alpha_url = f"{ALEPH_ALPHA_API_BASE}{aleph_alpha_path}"
-        body = await request.body()
-        
-        if transform_body:
-            body = json.dumps(transform_body(await request.json()))
-        
-        response = await client.post(aleph_alpha_url, content=body, headers=headers) if body else await client.post(aleph_alpha_url, headers=headers)
-
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
-
-        if request.query_params.get("stream") == "true":
-            return StreamingResponse(
-                response.aiter_bytes(),
-                media_type="text/event-stream",
-            )
-        else:
-            return JSONResponse(content=response.json())
+    return headers
 
 def transform_body_completions(body: Dict[str, Any]) -> Dict[str, Any]:
     mappings = {
@@ -43,10 +37,31 @@ def transform_body_completions(body: Dict[str, Any]) -> Dict[str, Any]:
         "stop": "stop_sequences",
         "logprobs": "log_probs"
     }
-    for old_key, new_key in mappings.items():
-        if old_key in body:
-            body[new_key] = body.pop(old_key)
-    return body
+    return {mappings.get(k, k): v for k, v in body.items()}
+
+async def proxy_request(
+    request: Request,
+    aleph_alpha_path: str,
+    transform_body: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None
+) -> StreamingResponse | JSONResponse:
+    headers = prepare_headers(request)
+    body = await request.body()
+    
+    if transform_body:
+        body = json.dumps(transform_body(await request.json()))
+    
+    try:
+        response = await client.request("POST", aleph_alpha_path, headers=headers, content=body)
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+
+    if request.query_params.get("stream") == "true":
+        return StreamingResponse(
+            response.aiter_bytes(),
+            media_type="text/event-stream",
+        )
+    else:
+        return JSONResponse(content=response.json())
 
 async def transform_embeddings(request: Request) -> JSONResponse:
     body = await request.json()
@@ -57,33 +72,30 @@ async def transform_embeddings(request: Request) -> JSONResponse:
         "pooling": ["mean"],
     }
     
-    headers = dict(request.headers.items())
-    headers.pop("content-length", None)
+    headers = prepare_headers(request)
     
-    async with httpx.AsyncClient() as client:
-        aleph_alpha_url = f"{ALEPH_ALPHA_API_BASE}/embed"
-        response = await client.post(aleph_alpha_url, json=aleph_alpha_body, headers=headers)
+    try:
+        response = await client.request("POST", "/embed", headers=headers, json=aleph_alpha_body)
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
 
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
-
-        aleph_alpha_data = response.json()
-        openai_response = {
-            "object": "list",
-            "data": [
-                {
-                    "object": "embedding",
-                    "embedding": aleph_alpha_data["embeddings"]["layer_40"]["mean"],
-                    "index": 0,
-                }
-            ],
-            "model": aleph_alpha_data["model_version"],
-            "usage": {
-                "prompt_tokens": aleph_alpha_data["num_tokens_prompt_total"],
-                "total_tokens": aleph_alpha_data["num_tokens_prompt_total"],
-            },
-        }
-        return JSONResponse(content=openai_response)
+    aleph_alpha_data = response.json()
+    openai_response = {
+        "object": "list",
+        "data": [
+            {
+                "object": "embedding",
+                "embedding": aleph_alpha_data["embeddings"]["layer_40"]["mean"],
+                "index": 0,
+            }
+        ],
+        "model": aleph_alpha_data["model_version"],
+        "usage": {
+            "prompt_tokens": aleph_alpha_data["num_tokens_prompt_total"],
+            "total_tokens": aleph_alpha_data["num_tokens_prompt_total"],
+        },
+    }
+    return JSONResponse(content=openai_response)
 
 @app.post("/v1/chat/completions")
 async def chat_completions(request: Request):
