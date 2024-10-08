@@ -61,14 +61,3 @@ This project is a FastAPI-based wrapper for the Aleph Alpha API, providing endpo
    ```
 
    The wrapper will transform this request to be compatible with Aleph Alpha's API.
-
-## Project Documentation
-
-- **`src/main.py`:** Contains the FastAPI application and endpoint definitions.
-- **`proxy_request`:** A utility function to forward requests to the Aleph Alpha API.
-- **Transform Functions:** Modify request bodies to match Aleph Alpha's expected format.
-
-## Development
-
-To add new dependencies:
-
