@@ -4,11 +4,29 @@ from os import getenv
 
 load_dotenv()
 
-messages = [{"role": "user", "content": "hello world!"}]
-
 openai.base_url = "http://localhost:8000/v1/"
 openai.api_key = getenv("AA_TOKEN")
 
-print(openai.embeddings.create(input="Apple", model="luminous-base"))
-# print(openai.chat.completions.create(messages=messages, model="luminous-base-control"))
-print(openai.completions.create(model="luminous-base-control", prompt="What's the capital of germany?", n=10, temperature=0.6, logprobs=1))
+def test_embeddings():
+    response = openai.embeddings.create(input="Apple", model="luminous-base")
+    print("Embeddings test:", response)
+
+def test_chat_completions():
+    messages = [{"role": "user", "content": "Hello, how are you?"}]
+    response = openai.chat.completions.create(messages=messages, model="luminous-base-control")
+    print("Chat completions test:", response)
+
+def test_completions():
+    response = openai.completions.create(
+        model="luminous-base-control",
+        prompt="What's the capital of Germany?",
+        n=1,
+        temperature=0.6,
+        max_tokens=50
+    )
+    print("Completions test:", response)
+
+if __name__ == "__main__":
+    test_embeddings()
+    test_chat_completions()
+    test_completions()
