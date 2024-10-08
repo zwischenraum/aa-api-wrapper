@@ -4,6 +4,10 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 from src.main import app
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 @pytest.fixture
 def client():
     return TestClient(app)
@@ -16,7 +20,7 @@ def mock_aleph_alpha_client():
 @pytest.fixture
 def headers():
     return {
-        "Authorization": f"Bearer {os.environ.get('ALEPH_ALPHA_API_TOKEN', 'test_token')}"
+        "Authorization": f"Bearer {os.getenv('AA_TOKEN')}"
     }
 
 def test_chat_completions(client, mock_aleph_alpha_client, headers):
@@ -44,6 +48,7 @@ def test_completions(client, mock_aleph_alpha_client, headers):
         "max_tokens": 50
     }, headers=headers)
 
+    print(response)
     assert response.status_code == 200
     assert "choices" in response.json()
     assert response.json()["choices"][0]["text"] == "Berlin is the capital of Germany."
@@ -64,8 +69,8 @@ def test_embeddings(client, mock_aleph_alpha_client, headers):
 
     assert response.status_code == 200
     assert "data" in response.json()
-    assert "embedding" in response.json()["data"][0]
-    assert response.json()["data"][0]["embedding"] == [0.1, 0.2, 0.3]
+    assert "embeddings" in response.json()["data"][0]
+    assert response.json()["data"][0]["embeddings"]["layer_40"]["mean"] == [0.1, 0.2, 0.3]
 
 def test_chat_completions_stream(client, mock_aleph_alpha_client, headers):
     mock_response = MagicMock()

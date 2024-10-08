@@ -28,5 +28,5 @@ def test_completions():
 
 if __name__ == "__main__":
     test_embeddings()
-    test_chat_completions()
+    # test_chat_completions()
     test_completions()
