@@ -27,7 +27,7 @@ async def proxy_request(
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
 
-    if request.query_params.get("stream") == "true":
+    if json.loads(body).get("stream"):
         return StreamingResponse(
             response.aiter_bytes(),
             media_type="text/event-stream",
