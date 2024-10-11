@@ -8,6 +8,7 @@ packages = [{ include = "aa_api_wrapper", from = "src" }]
 
 [tool.poetry.scripts]
 start = "aa_api_wrapper.main:main"
+dev = "aa_api_wrapper.dev:app"
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -17,6 +18,8 @@ httpx = "^0.27.2"
 python-dotenv = "^1.0.1"
 openai = "^1.51.0"
 pytest = "^8.3.3"
+aleph-alpha-client = "^7.4.0"
+pydantic = "^2.9.2"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

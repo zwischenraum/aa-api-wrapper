@@ -5,11 +5,31 @@ from typing import Callable, Dict, Any, Optional
 import httpx
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
+from openai.types import (
+    Completion,
+    CompletionCreateParams,
+    CreateEmbeddingResponse,
+    EmbeddingCreateParams,
+)
 
-from aa_api_wrapper.client import AlephAlphaClient
-from aa_api_wrapper.utils import prepare_headers, transform_body_completions
+from aa_api_wrapper.aleph_alpha import (
+    create_completion_request,
+    create_embedding_request,
+    init_from_request,
+)
+from aa_api_wrapper.client import ManualClient
+from aa_api_wrapper.http import (
+    prepare_headers,
+)
 
-client = AlephAlphaClient(
+from aa_api_wrapper.openai import (
+    CompletionCreateParamsAdapter,
+    EmbeddingCreateParamsAdapter,
+    create_completion_response,
+    create_embedding_response,
+)
+
+manual_client = ManualClient(
     os.environ.get("ALEPH_ALPHA_API_BASE", "https://api.aleph-alpha.com")
 )
 
@@ -26,7 +46,7 @@ async def proxy_request(
         body = json.dumps(transform_body(await request.json()))
 
     try:
-        response = await client.request(
+        response = await manual_client.request(
             "POST", aleph_alpha_path, headers=headers, content=body
         )
     except httpx.HTTPStatusError as e:
@@ -41,41 +61,35 @@ async def proxy_request(
         return JSONResponse(content=response.json())
 
 
-async def transform_embeddings(request: Request) -> JSONResponse:
+async def transform_embeddings(request: Request) -> CreateEmbeddingResponse:
+    aa_client = init_from_request(request)
+
     body = await request.json()
-    aleph_alpha_body = {
-        "model": body.get("model", "luminous-base"),
-        "prompt": body["input"],
-        "layers": [-1],
-        "pooling": ["mean"],
-    }
+    embedding_params: EmbeddingCreateParams = (
+        EmbeddingCreateParamsAdapter.validate_python(body)
+    )
+    model = embedding_params["model"]
 
-    headers = prepare_headers(request)
+    aa_request = create_embedding_request(embedding_params)
+    aa_response = aa_client.semantic_embed(aa_request, model=model)
 
-    try:
-        response = await client.request(
-            "POST", "/embed", headers=headers, json=aleph_alpha_body
-        )
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+    return create_embedding_response(
+        embedding_vector=aa_response.embedding, model=model
+    )
 
-    aleph_alpha_data = response.json()
-    openai_response = {
-        "object": "list",
-        "data": [
-            {
-                "object": "embedding",
-                "embedding": aleph_alpha_data["embeddings"]["layer_40"]["mean"],
-                "index": 0,
-            }
-        ],
-        "model": aleph_alpha_data["model_version"],
-        "usage": {
-            "prompt_tokens": aleph_alpha_data["num_tokens_prompt_total"],
-            "total_tokens": aleph_alpha_data["num_tokens_prompt_total"],
-        },
-    }
-    return JSONResponse(content=openai_response)
+
+async def transform_complete(request: Request) -> Completion:
+    aa_client = init_from_request(request)
+
+    body = await request.json()
+    completion_params: CompletionCreateParams = (
+        CompletionCreateParamsAdapter.validate_python(body)
+    )
+
+    aa_request = create_completion_request(completion_params)
+    aa_response = aa_client.complete(aa_request, completion_params["model"])
+
+    return create_completion_response(aa_response, completion_params["model"])
 
 
 async def chat_completions_handler(request: Request):
@@ -83,9 +97,7 @@ async def chat_completions_handler(request: Request):
 
 
 async def completions_handler(request: Request):
-    return await proxy_request(
-        request, "/complete", transform_body=transform_body_completions
-    )
+    return await transform_complete(request)
 
 
 async def embeddings_handler(request: Request):

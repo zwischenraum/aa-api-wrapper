@@ -15,3 +15,7 @@ def transform_body_completions(body: Dict[str, Any]) -> Dict[str, Any]:
         "logprobs": "log_probs",
     }
     return {mappings.get(k, k): v for k, v in body.items()}
+
+
+def unpack_bearer_token(request: Request) -> str:
+    return request.headers["Authorization"].split("Bearer ")[1]
