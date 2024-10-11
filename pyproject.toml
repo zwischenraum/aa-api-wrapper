@@ -8,7 +8,6 @@ packages = [{ include = "aa_api_wrapper", from = "src" }]
 
 [tool.poetry.scripts]
 start = "aa_api_wrapper.main:main"
-dev = "aa_api_wrapper.dev:app"
 
 [tool.poetry.dependencies]
 python = "^3.11"
