@@ -13,7 +13,7 @@ from openai.types import (
 )
 
 from aa_api_wrapper.aleph_alpha import (
-    create_completion_request,
+    # create_completion_request,
     create_embedding_request,
     init_from_request,
 )
