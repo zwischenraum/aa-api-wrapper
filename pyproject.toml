@@ -19,6 +19,7 @@ openai = "^1.51.0"
 pytest = "^8.3.3"
 aleph-alpha-client = "^7.4.0"
 pydantic = "^2.9.2"
+pydantic-settings = "^2.5.2"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
