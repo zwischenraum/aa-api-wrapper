@@ -14,3 +14,16 @@ class ManualClient:
             response = await client.request(method, url, headers=headers, **kwargs)
             response.raise_for_status()
             return response
+
+
+    async def stream(self, method: str, path: str, headers: Dict[str, str], **kwargs):
+        url = f"{self.base_url}{path}"
+
+        async def stream_generator():
+            async with httpx.AsyncClient() as client, client.stream(
+                method, url, headers=headers, **kwargs
+            ) as response:
+                async for chunk in response.aiter_raw():
+                    yield chunk
+
+        return stream_generator()
