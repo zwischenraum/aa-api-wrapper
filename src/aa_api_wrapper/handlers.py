@@ -1,6 +1,5 @@
 import json
 import os
-from typing import Callable, Dict, Any, Optional
 
 import httpx
 from fastapi import HTTPException, Request
@@ -37,28 +36,30 @@ manual_client = ManualClient(
 async def proxy_request(
     request: Request,
     aleph_alpha_path: str,
-    transform_body: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
 ) -> StreamingResponse | JSONResponse:
     headers = prepare_headers(request)
     body = await request.body()
 
-    if transform_body:
-        body = json.dumps(transform_body(await request.json()))
+    json_body = json.loads(body)
+    should_stream = json_body.get("stream", False)
 
-    try:
-        response = await manual_client.request(
-            "POST", aleph_alpha_path, headers=headers, content=body
-        )
-    except httpx.HTTPStatusError as e:
-        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
-
-    if json.loads(body).get("stream"):
-        return StreamingResponse(
-            response.aiter_bytes(),
-            media_type="text/event-stream",
-        )
-    else:
+    if not should_stream:
+        try:
+            response = await manual_client.request(
+                "POST", aleph_alpha_path, headers=headers, content=body
+            )
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(
+                status_code=e.response.status_code, detail=e.response.text
+            )
         return JSONResponse(content=response.json())
+
+    return StreamingResponse(
+        await manual_client.stream(
+            "POST", aleph_alpha_path, headers=headers, content=body
+        ),
+        media_type="application/json",
+    )
 
 
 async def transform_embeddings(request: Request) -> CreateEmbeddingResponse:
