@@ -2,7 +2,7 @@ from typing import Dict
 import httpx
 
 
-class AlephAlphaClient:
+class ManualClient:
     def __init__(self, base_url: str):
         self.base_url = base_url
 

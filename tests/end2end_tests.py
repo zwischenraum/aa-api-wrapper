@@ -1,3 +1,4 @@
+import os
 import openai
 from dotenv import load_dotenv
 from os import getenv
@@ -16,9 +17,11 @@ def test_embeddings():
 
 
 def test_chat_completions():
-    messages: list[ChatCompletionMessageParam] = [{"role": "user", "content": "Hello, how are you?"}]
+    messages: list[ChatCompletionMessageParam] = [
+        {"role": "user", "content": "Hello, how are you?"}
+    ]
     response = openai.chat.completions.create(
-        messages=messages, model="luminous-base-control"
+        messages=messages, model=os.getenv("AA_CHAT_MODEL", "luminous-base")
     )
     print("Chat completions test:", response)
 
@@ -35,6 +38,8 @@ def test_completions():
 
 
 if __name__ == "__main__":
-    # test_embeddings()
+    test_embeddings()
+    print("-" * 20)
     test_chat_completions()
-    # test_completions()
+    print("-" * 20)
+    test_completions()
