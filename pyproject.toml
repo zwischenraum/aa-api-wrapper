@@ -4,6 +4,10 @@ version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
+packages = [{ include = "aa_api_wrapper", from = "src" }]
+
+[tool.poetry.scripts]
+start = "aa_api_wrapper.main:main"
 
 [tool.poetry.dependencies]
 python = "^3.11"
