@@ -1,18 +1,28 @@
-import os
 import openai
 from dotenv import load_dotenv
-from os import getenv
 
 from openai.types.chat import ChatCompletionMessageParam
 
+from aa_api_wrapper.settings import get_settings
+
 load_dotenv()
 
+settings = get_settings()
+
 openai.base_url = "http://localhost:8000/v1/"
-openai.api_key = getenv("AA_TOKEN")
+openai.api_key = settings.aa_token.get_secret_value()
+print(openai.api_key)
 
 
 def test_embeddings():
     response = openai.embeddings.create(input="Apple", model="luminous-base")
+    print("Embeddings test:", response)
+
+
+def test_multi_embeddings():
+    response = openai.embeddings.create(
+        input=["Apple", "Banana"], model="luminous-base"
+    )
     print("Embeddings test:", response)
 
 
@@ -21,7 +31,7 @@ def test_chat_completions():
         {"role": "user", "content": "Hello, how are you?"}
     ]
     response = openai.chat.completions.create(
-        messages=messages, model=os.getenv("AA_CHAT_MODEL", "luminous-base")
+        messages=messages, model=settings.aa_chat_model
     )
     print("Chat completions test:", response)
 
@@ -39,6 +49,8 @@ def test_completions():
 
 if __name__ == "__main__":
     test_embeddings()
+    print("-" * 20)
+    test_multi_embeddings()
     print("-" * 20)
     test_chat_completions()
     print("-" * 20)
