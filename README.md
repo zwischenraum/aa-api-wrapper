@@ -7,8 +7,8 @@ This project is a FastAPI-based wrapper for the Aleph Alpha API, providing endpo
 1. **Clone the repository:**
 
    ```bash
-   git clone <repository-url>
-   cd <repository-directory>
+   git clone git@github.com:zwischenraum/aa-api-wrapper.git
+   cd aa-api-wrapper
    ```
 
 2. **Install Poetry:**
@@ -29,18 +29,18 @@ This project is a FastAPI-based wrapper for the Aleph Alpha API, providing endpo
    ALEPH_ALPHA_API_BASE=https://api.aleph-alpha.com
    ```
 
-## Usage
+   and if you want to use semantic embeddings
 
-1. **Activate the Poetry environment:**
-
-   ```bash
-   poetry shell
    ```
+   USE_SEMANTIC_EMBEDDINGS=true
+   ```
+
+## Usage
 
 2. **Run the FastAPI server:**
 
    ```bash
-   uvicorn src.main:app --reload
+   poetry run start
    ```
 
 3. **Available Endpoints:**
