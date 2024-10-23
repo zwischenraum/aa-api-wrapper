@@ -1,5 +1,5 @@
 import os
-from aleph_alpha_client import Client, CompletionRequest, Prompt
+from aleph_alpha_client import Client, CompletionRequest, EmbeddingRequest, Prompt
 from aleph_alpha_client.embedding import (
     SemanticEmbeddingRequest,
     SemanticRepresentation,
@@ -30,18 +30,39 @@ def init_from_request(request: Request):
     return init_client(token)
 
 
-def create_embedding_request(
+def create_semantic_embedding_requests(
     embedding_params: EmbeddingCreateParams,
-) -> SemanticEmbeddingRequest:
-    embedding_input = embedding_params["input"]
-    assert isinstance(
-        embedding_input, str
-    ), "Lists of inputs are currently not supported"
+) -> list[SemanticEmbeddingRequest]:
+    embedding_inputs = embedding_params["input"]
 
-    prompt = Prompt.from_text(embedding_input)
-    return SemanticEmbeddingRequest(
-        prompt=prompt, representation=SemanticRepresentation.Document
-    )
+    if isinstance(embedding_inputs, str):
+        embedding_inputs = [embedding_inputs]
+
+    return [
+        SemanticEmbeddingRequest(
+            prompt=Prompt.from_text(embedding_input),  # type: ignore
+            representation=SemanticRepresentation.Document,
+        )
+        for embedding_input in embedding_inputs
+    ]
+
+
+def create_embedding_requests(
+    embedding_params: EmbeddingCreateParams,
+) -> list[EmbeddingRequest]:
+    embedding_inputs = embedding_params["input"]
+
+    if isinstance(embedding_inputs, str):
+        embedding_inputs = [embedding_inputs]
+
+    return [
+        EmbeddingRequest(
+            prompt=Prompt.from_text(embedding_input),  # type: ignore
+            layers=[-1],
+            pooling=["last_token"],
+        )
+        for embedding_input in embedding_inputs
+    ]
 
 
 def create_completion_request(

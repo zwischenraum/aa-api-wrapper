@@ -20,7 +20,7 @@ EmbeddingCreateParamsAdapter = TypeAdapter(EmbeddingCreateParams)
 
 
 def create_embedding_response(
-    embedding_vector: list[float],
+    embedding_vectors: list[list[float]],
     model: str,
 ) -> CreateEmbeddingResponse:
     return CreateEmbeddingResponse(
@@ -33,6 +33,7 @@ def create_embedding_response(
                 embedding=embedding_vector,
                 index=0,
             )
+            for embedding_vector in embedding_vectors
         ],
     )
 
