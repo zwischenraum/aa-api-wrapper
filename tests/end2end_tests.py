@@ -10,7 +10,7 @@ load_dotenv()
 settings = get_settings()
 
 openai.base_url = "http://localhost:8000/v1/"
-openai.api_key = settings.aa_token.get_secret_value()
+openai.api_key = settings.aa_token.get_secret_value() if settings.aa_token else None
 print(openai.api_key)
 
 
@@ -30,8 +30,9 @@ def test_chat_completions():
     messages: list[ChatCompletionMessageParam] = [
         {"role": "user", "content": "Hello, how are you?"}
     ]
+    model = settings.aa_chat_model if settings.aa_chat_model else None
     response = openai.chat.completions.create(
-        messages=messages, model=settings.aa_chat_model
+        messages=messages, model=model
     )
     print("Chat completions test:", response)
 
