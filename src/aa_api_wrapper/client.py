@@ -1,13 +1,15 @@
 from typing import Dict
 import httpx
 
+from aa_api_wrapper.settings import get_settings
+
 
 class ManualClient:
     def __init__(self, base_url: str):
         self.base_url = base_url
 
     def _init_async_client(self):
-        return httpx.AsyncClient(timeout=180)
+        return httpx.AsyncClient(timeout=get_settings().http_timeout)
 
     async def request(
         self, method: str, path: str, headers: Dict[str, str], **kwargs
