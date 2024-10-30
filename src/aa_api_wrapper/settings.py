@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     aleph_alpha_api_base: str = Field(alias="ALEPH_ALPHA_API_BASE")
     aa_chat_model: str = Field(alias="AA_CHAT_MODEL")
     use_semantic_embeddings: bool = Field(alias="USE_SEMANTIC_EMBEDDINGS")
+    http_timeout: int = Field(alias="HTTP_TIMEOUT", default=60 * 10)
 
 
 @cache
