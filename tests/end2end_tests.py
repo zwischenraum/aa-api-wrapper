@@ -48,7 +48,14 @@ def test_completions():
     print("Completions test:", response)
 
 
+def test_models():
+    response = openai.models.list()
+    print("Models test:", response)
+
+
 if __name__ == "__main__":
+    test_models()
+    print("-" * 20)
     test_embeddings()
     print("-" * 20)
     test_multi_embeddings()
