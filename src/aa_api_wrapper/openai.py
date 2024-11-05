@@ -23,7 +23,8 @@ EmbeddingCreateParamsAdapter = TypeAdapter(EmbeddingCreateParams)
 
 
 def create_models_response(models: list) -> SyncPage[Model]:
-    return SyncPage(data=models, object="list")
+    model_objects = [Model.model_validate(model) for model in models]
+    return SyncPage(data=model_objects, object="list")
 
 
 def create_embedding_response(

@@ -69,7 +69,24 @@ async def embeddings_handler(request: Request) -> CreateEmbeddingResponse:
 async def models_handler(
     request: Request,
 ) -> JSONResponse:
-    print(dict(request.headers))
-    print(await request.json())
-    models = []
+    models = [
+        {
+            "id": "luminous-base",
+            "object": "model",
+            "created": 1694000000,
+            "owned_by": "aleph-alpha",
+        },
+        {
+            "id": "luminous-extended",
+            "object": "model", 
+            "created": 1694000000,
+            "owned_by": "aleph-alpha",
+        },
+        {
+            "id": "luminous-supreme",
+            "object": "model",
+            "created": 1694000000,
+            "owned_by": "aleph-alpha",
+        }
+    ]
     return create_models_response(models=models)
