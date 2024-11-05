@@ -4,11 +4,13 @@ from typing import cast
 import httpx
 from aleph_alpha_client import Client
 from fastapi import HTTPException, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import StreamingResponse
+from openai._streaming import Stream
 from openai.types import (
     CompletionCreateParams,
     EmbeddingCreateParams,
 )
+from openai.types.chat import ChatCompletion, ChatCompletionChunk
 
 from aa_api_wrapper.aleph_alpha import (
     create_completion_request,
@@ -31,7 +33,7 @@ manual_client = ManualClient(
 async def proxy_request(
     request: Request,
     aleph_alpha_path: str,
-) -> StreamingResponse | JSONResponse:
+) -> ChatCompletion | StreamingResponse | Stream[ChatCompletionChunk]:
     headers = prepare_headers(request)
     body = await request.body()
 
@@ -49,7 +51,7 @@ async def proxy_request(
             raise HTTPException(
                 status_code=e.response.status_code, detail=e.response.text
             )
-        return JSONResponse(content=response.json())
+        return ChatCompletion.model_validate(obj=response.json())
 
     return StreamingResponse(
         await manual_client.stream(
