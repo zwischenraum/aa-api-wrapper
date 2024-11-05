@@ -69,24 +69,16 @@ async def embeddings_handler(request: Request) -> CreateEmbeddingResponse:
 async def models_handler(
     request: Request,
 ) -> JSONResponse:
+    aa_client = init_from_request(request)
+    aa_models = aa_client.models()
+
     models = [
         {
-            "id": "luminous-base",
-            "object": "model",
-            "created": 1694000000,
-            "owned_by": "aleph-alpha",
-        },
-        {
-            "id": "luminous-extended",
-            "object": "model", 
-            "created": 1694000000,
-            "owned_by": "aleph-alpha",
-        },
-        {
-            "id": "luminous-supreme",
+            "id": model["name"],
             "object": "model",
             "created": 1694000000,
             "owned_by": "aleph-alpha",
         }
+        for model in aa_models
     ]
     return create_models_response(models=models)

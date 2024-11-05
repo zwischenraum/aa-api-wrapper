@@ -63,3 +63,5 @@ if __name__ == "__main__":
     test_chat_completions()
     print("-" * 20)
     test_completions()
+    print("-" * 20)
+    test_models()
