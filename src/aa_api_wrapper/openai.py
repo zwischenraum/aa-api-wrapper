@@ -1,15 +1,18 @@
+from typing import Literal, cast
+
 from aleph_alpha_client.completion import CompletionResponse
+from openai.pagination import SyncPage
 from openai.types import (
     Completion,
     CompletionChoice,
     CompletionCreateParams,
     CreateEmbeddingResponse,
+    Model,
 )
-from openai.types.embedding_create_params import EmbeddingCreateParams
 from openai.types.create_embedding_response import Usage
 from openai.types.embedding import Embedding
+from openai.types.embedding_create_params import EmbeddingCreateParams
 from pydantic import TypeAdapter
-from typing import Literal, cast
 
 from aa_api_wrapper.aleph_alpha import AaFinishReason
 
@@ -17,6 +20,10 @@ OpenAiFinishReason = Literal["stop", "length", "content_filter"]
 
 CompletionCreateParamsAdapter = TypeAdapter(CompletionCreateParams)
 EmbeddingCreateParamsAdapter = TypeAdapter(EmbeddingCreateParams)
+
+
+def create_models_response(models: list) -> SyncPage[Model]:
+    return SyncPage(data=models, object="list")
 
 
 def create_embedding_response(
