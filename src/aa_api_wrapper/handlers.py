@@ -16,6 +16,7 @@ from aa_api_wrapper.openai import (
     EmbeddingCreateParamsAdapter,
     create_completion_response,
     create_embedding_response,
+    create_models_response,
 )
 from aa_api_wrapper.proxy import (
     proxy_completion,
@@ -63,3 +64,21 @@ async def embeddings_handler(request: Request) -> CreateEmbeddingResponse:
         embedding_vectors = proxy_regular_embeddings(embedding_params, aa_client, model)
 
     return create_embedding_response(embedding_vectors=embedding_vectors, model=model)
+
+
+async def models_handler(
+    request: Request,
+) -> JSONResponse:
+    aa_client = init_from_request(request)
+    aa_models = aa_client.models()
+
+    models = [
+        {
+            "id": model["name"],
+            "object": "model",
+            "created": 1694000000,
+            "owned_by": "aleph-alpha",
+        }
+        for model in aa_models
+    ]
+    return create_models_response(models=models)

@@ -1,23 +1,15 @@
 from fastapi import FastAPI, Request
-from dotenv import load_dotenv
-import os
 import uvicorn
 
 from aa_api_wrapper.handlers import (
     chat_completions_handler,
     completions_handler,
     embeddings_handler,
+    models_handler,
 )
 
 
 app = FastAPI()
-
-load_dotenv()
-
-ALEPH_ALPHA_API_BASE = os.environ.get(
-    "ALEPH_ALPHA_API_BASE", "https://api.aleph-alpha.com"
-)
-
 
 @app.post("/v1/chat/completions")
 async def chat_completions(request: Request):
@@ -32,6 +24,11 @@ async def completions(request: Request):
 @app.post("/v1/embeddings")
 async def embeddings(request: Request):
     return await embeddings_handler(request)
+
+
+@app.get("/v1/models")
+async def models(request: Request):
+    return await models_handler(request)
 
 
 def main():
