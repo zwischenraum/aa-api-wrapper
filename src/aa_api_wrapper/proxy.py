@@ -46,6 +46,14 @@ async def proxy_request(
 
     should_stream = json_body.get("stream", False)
 
+    # # Save the request to a file with .http extension
+    # with open("request.http", "w") as file:
+    #     file.write(f"{request.method} {request.url}\n")
+    #     for key, value in headers.items():
+    #         file.write(f"{key}: {value}\n")
+    #     if body:
+    #         file.write(f"\n{body.decode()}")
+
     if not should_stream:
         try:
             response = await manual_client.request(
