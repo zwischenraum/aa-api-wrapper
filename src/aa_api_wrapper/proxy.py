@@ -38,6 +38,12 @@ async def proxy_request(
     body = await request.body()
 
     json_body = json.loads(body)
+
+    json_body.pop("n", None)
+    json_body.pop("top_p", None)
+
+    body = json.dumps(json_body).encode()
+
     should_stream = json_body.get("stream", False)
 
     if not should_stream:
